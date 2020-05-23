@@ -9,22 +9,6 @@ import prettytable  # 匯入表格庫
 # 由於pandas判斷週期性時會出現warning，這裡忽略提示
 import warnings
 
-warnings.filterwarnings('ignore')
-
-# 讀取資料
-# 建立解析列的功能物件
-date_parse = lambda dates: pd.datetime.strptime(dates, '%m-%d-%Y')
-# 讀取資料
-df = pd.read_table('https://raw.githubusercontent.com/ffzs/dataset/master/time_series.txt', delimiter='\t',
-                   index_col='date', date_parser=date_parse)
-# 將列轉換為float32型別
-print(df)
-print(type(df))
-ts_data = df['number'].astype('float')
-print('data summary')
-# 列印輸出時間序列資料概況
-print(ts_data.describe())
-
 
 # 多次用到的表格
 def pre_table(table_name, table_rows):
@@ -79,13 +63,6 @@ def acorr_val(ts):
     return pvalue  # 返回白噪聲檢驗的P值和展示資料表格物件
 
 
-# 原始資料檢驗
-# 穩定性檢驗
-adf, pvalue1, critical_values = adf_val(ts_data, 'raw time series', 'raw acf', 'raw pacf')
-# 白噪聲檢驗
-pvalue2 = acorr_val(ts_data)
-
-
 # 資料平穩處理
 def get_best_log(ts, max_log=5, rule1=True, rule2=True):
     """
@@ -123,23 +100,6 @@ def recover_log(ts, log_n):
     return ts  # 返回時間序列
 
 
-# 對時間序列做穩定性處理
-# 穩定性檢驗規則
-rule1 = (adf < critical_values['1%'] and adf < critical_values['5%'] and adf < critical_values[
-    '10%'] and pvalue1 < 0.01)
-# 白噪聲檢驗的規則
-rule2 = (pvalue2[0,] < 0.05)
-# 使用log進行穩定性處理
-log_n, ts_data = get_best_log(ts_data, max_log=5, rule1=rule1, rule2=rule2)
-
-
-# 穩定後資料進行檢驗
-# 穩定性檢驗
-adf, pvalue1, critical_values = adf_val(ts_data, 'final time series', 'final acf', 'final pacf')
-# 白噪聲檢驗
-pvalue2 = acorr_val(ts_data)
-
-
 # arma最優模型訓練
 def arma_fit(ts):
     """
@@ -157,7 +117,7 @@ def arma_fit(ts):
             try:
                 # ARMA模型訓練 disp不列印收斂資訊 method條件平方和似然度最大化
                 results_ARMA = model.fit(disp=-1, method='css')
-            except:
+            except Exception:
                 continue  # 遇到報錯繼續
             finally:
                 tmp_aic = results_ARMA.aic  # 模型的獲得aic
@@ -210,12 +170,6 @@ def train_test(model_arma, ts, log_n, rule1=True, rule2=True):
     return ts  # 返回還原後的時間序列
 
 
-# 訓練最佳ARMA模型並輸出相關引數和物件
-model_arma = arma_fit(ts_data)
-# 模型訓練和效果評估
-ts_data = train_test(model_arma, ts_data, log_n, rule1=rule1, rule2=rule2)
-
-
 # 預測未來指定時間項的資料
 def predict_data(model_arma, ts, log_n, start, end, rule1=True, rule2=True):
     """
@@ -242,9 +196,57 @@ def predict_data(model_arma, ts, log_n, start, end, rule1=True, rule2=True):
     plt.show()  # 展示影象
 
 
-# 模型預測應用
-# 設定時間
-start = '1991-07-28'
-end = '1991-08-02'
-# 預測
-predict_data(model_arma, ts_data, log_n, start, end, rule1=rule1, rule2=rule2)
+def main():
+    warnings.filterwarnings('ignore')
+
+    # 讀取資料
+    # 建立解析列的功能物件
+    date_parse = lambda dates: pd.datetime.strptime(dates, '%m-%d-%Y')
+    # 讀取資料
+    df = pd.read_table('https://raw.githubusercontent.com/ffzs/dataset/master/time_series.txt', delimiter='\t',
+                       index_col='date', date_parser=date_parse)
+    # 將列轉換為float32型別
+    print(df)
+    print(type(df))
+    ts_data = df['number'].astype('float32')
+    print('data summary')
+    # 列印輸出時間序列資料概況
+    print(ts_data.describe())
+
+    # 原始資料檢驗
+    # 穩定性檢驗
+    adf, pvalue1, critical_values = adf_val(ts_data, 'raw time series', 'raw acf', 'raw pacf')
+    # 白噪聲檢驗
+    pvalue2 = acorr_val(ts_data)
+
+    # 對時間序列做穩定性處理
+    # 穩定性檢驗規則
+    rule1 = (adf < critical_values['1%'] and adf < critical_values['5%'] and adf < critical_values[
+        '10%'] and pvalue1 < 0.01)
+    # 白噪聲檢驗的規則
+    rule2 = (pvalue2[0,] < 0.05)
+    # 使用log進行穩定性處理
+    log_n, ts_data = get_best_log(ts_data, max_log=5, rule1=rule1, rule2=rule2)
+
+    # 穩定後資料進行檢驗
+    # 穩定性檢驗
+    adf, pvalue1, critical_values = adf_val(ts_data, 'final time series', 'final acf', 'final pacf')
+    # 白噪聲檢驗
+    pvalue2 = acorr_val(ts_data)
+
+    # 訓練最佳ARMA模型並輸出相關引數和物件
+    model_arma = arma_fit(ts_data)
+    # 模型訓練和效果評估
+    ts_data = train_test(model_arma, ts_data, log_n, rule1=rule1, rule2=rule2)
+
+    # 模型預測應用
+    # 設定時間
+    start = '1991-07-28'
+    end = '1991-08-02'
+    # 預測
+    predict_data(model_arma, ts_data, log_n, start, end, rule1=rule1, rule2=rule2)
+
+
+if __name__ == '__main__':
+    main()
+
