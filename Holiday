@@ -1,3 +1,0 @@
-select 	WDate, date_add(d.WDate, interval -1 day) as '1 day before'
-from	date_map as d
-where d.Holiday_Name = '清明';
