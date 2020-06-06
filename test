@@ -41,7 +41,7 @@ from sklearn.model_selection import train_test_split
 
 # y = a + b1x1 + b2X2 + b3X3 + e
 # intercept 似乎就是截距, coef 似乎就是 b1, b2, b3
-# y = -309.68167455 - 309.68167455X1 + 1.62218727X2
+# y = 721.82840238 - 48.31790883X1 - 1.59768164X2 - 13.55110411X3
 
 size = [5, 10, 12, 14, 18, 30, 33, 55, 65, 80, 100, 150]
 distance = [50, 20, 70, 100, 200, 150, 30, 50, 70, 35, 40, 20]
@@ -50,14 +50,21 @@ price = [300, 400, 450, 800, 1200, 1400, 2000, 2500, 2800, 3000, 3500, 9000]
 series_dict = {'X1': size, 'X2': distance, 'z': zz,  'y': price}
 df = pd.DataFrame(series_dict)
 
-print(df)
+# print(df)
 
 X = df[['X1', 'X2', 'z']]
 y = df[['y']]
 
-regr = linear_model.LinearRegression()
-regr.fit(X, y)
+regr = linear_model.LinearRegression().fit(X, y)
+# regr.fit(X, y)
 
 print(regr.score(X, y))
 print(regr.intercept_)
 print(regr.coef_)
+
+print('------------------------------')
+
+predict_x = [[75, 100, 83]]
+
+predict_y = regr.predict(predict_x)
+print(predict_y)
