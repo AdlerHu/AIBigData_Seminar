@@ -28,4 +28,4 @@ if __name__ == '__main__':
     X_test = np.arange(-5.0, 5.0, 0.05)[:, np.newaxis]
     yp = clf.predict(X_test)
 
-    plotfigure(X, X_test, y, yp)
+    plotfigure(X.tolist(), X_test, y, yp)
