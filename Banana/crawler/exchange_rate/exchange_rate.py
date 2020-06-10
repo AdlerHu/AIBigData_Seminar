@@ -7,14 +7,14 @@ headers = {
                   'Chrome/80.0.3987.132 Safari/537.36'}
 
 # 連接我的資料庫
-db = MySQLdb.connect(host='127.0.0.1', user='root', passwd='root', db='banana_database', port=3306, charset='utf8')
+# db = MySQLdb.connect(host='127.0.0.1', user='root', passwd='root', db='banana_database', port=3306, charset='utf8')
 # 連接Paul的資料庫
-# db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
+db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
 
 cursor = db.cursor()
 db.autocommit(True)
 
-data = {'queryStartDate': '2012/01/01', 'queryEndDate': '2019/12/31'}
+data = {'queryStartDate': '2012/01/01', 'queryEndDate': '2020/06/10'}
 
 url = 'https://www.taifex.com.tw/cht/3/dailyFXRate'
 ss = requests.session()
@@ -31,7 +31,7 @@ for date in date_list:
 
 for i in range(len(rate_list)):
     try:
-        sql_str = f"INSERT INTO Adler_rate (`date`, `rate`) VALUES (\'{date_list[i]}\', {rate_list[i]});"
+        sql_str = f"INSERT INTO exchange_rate (`date`, `rate`) VALUES (\'{date_list[i]}\', {rate_list[i]});"
         cursor.execute(sql_str)
         print('Done')
     except Exception as err:
