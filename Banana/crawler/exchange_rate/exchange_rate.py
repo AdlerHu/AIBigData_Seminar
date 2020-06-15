@@ -30,14 +30,16 @@ def get_today_date(cursor):
     return today
 
 
-def crawl(today):
+def crawl(last_date):
     headers = {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/80.0.3987.132 Safari/537.36'}
     url = 'https://www.taifex.com.tw/cht/3/dailyFXRate'
     ss = requests.session()
 
-    data = {'queryStartDate': today, 'queryEndDate': today}
+    today = str(datetime.date.today()).replace('-', '/')
+
+    data = {'queryStartDate': last_date, 'queryEndDate': today}
 
     resp = ss.post(url, headers=headers, data=data)
 
@@ -65,8 +67,8 @@ def insert_into_database(cursor, date_list, exchange_rate_list):
 def main():
 
     cursor = connect_database()
-    today = get_today_date(cursor=cursor)
-    date_list, exchange_rate_list = crawl(today)
+    last_date = get_today_date(cursor=cursor)
+    date_list, exchange_rate_list = crawl(last_date=last_date)
     insert_into_database(cursor=cursor, date_list=date_list, exchange_rate_list=exchange_rate_list)
 
 
