@@ -13,7 +13,7 @@ def connect_database():
     return cursor
 
 
-def get_today_date(cursor):
+def get_last_date(cursor):
     # 從資料庫得到最新日期
     sel_sql = '''select x.`date`
     from (select e.`date` 
@@ -25,9 +25,9 @@ def get_today_date(cursor):
     data_row = cursor.fetchall()
 
     last = data_row[0][0]
-    today = str(last + datetime.timedelta(days=1)).replace('-', '/')
+    last_date = str(last + datetime.timedelta(days=1)).replace('-', '/')
 
-    return today
+    return last_date
 
 
 def crawl(last_date):
@@ -54,7 +54,7 @@ def crawl(last_date):
 
 
 def insert_into_database(cursor, date_list, exchange_rate_list):
-
+    
     for i in range(len(exchange_rate_list)):
         try:
             sql_str = f"INSERT INTO exchange_rate (`date`, `rate`) VALUES (\'{date_list[i]}\', {exchange_rate_list[i]});"
@@ -65,12 +65,12 @@ def insert_into_database(cursor, date_list, exchange_rate_list):
 
 
 def main():
-
     cursor = connect_database()
-    last_date = get_today_date(cursor=cursor)
+    last_date = get_last_date(cursor=cursor)
     date_list, exchange_rate_list = crawl(last_date=last_date)
     insert_into_database(cursor=cursor, date_list=date_list, exchange_rate_list=exchange_rate_list)
 
 
 if __name__ == '__main__':
     main()
+
