@@ -11,6 +11,19 @@ from sklearn.metrics import mean_squared_error
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
+import MySQLdb
+import pandas as pd
+
+
+# 連接資料庫
+def connect_database():
+
+    # 連接Paul的資料庫
+    db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
+
+    cursor = db.cursor()
+    db.autocommit(True)
+    return db, cursor
 
 
 # convert series to supervised learning
@@ -42,10 +55,20 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + 0.00001))) * 100
 
 
-def load_data():
+def load_data(db, cursor):
+    sql = """SELECT p.price, p.amount, p.d1_origin_price, p.d1_price, 
+    p.p_banana_d1_price, p.p_banana_d1_amount, p.d5_avg_price, p.dx_avg_amount
+FROM Prediction_Source p
+WHERE (p.market_no) = '109';"""
+
+    cursor.execute(sql)
+
+    dataset = pd.read_sql_query(sql, db)
+    veri_set = pd.read_sql_query(sql, db)
+
     # load dataset
-    dataset = read_csv('Taipei1_price_train.csv', header=0, index_col=0)
-    veri_set = read_csv('Taipei1_price_verification.csv', header=0, index_col=0)
+    # dataset = read_csv('Taipei1_price_train.csv', header=0, index_col=0)
+    # veri_set = read_csv('Taipei1_price_verification.csv', header=0, index_col=0)
 
     values = dataset.values
     veri_values = veri_set.values
@@ -180,7 +203,10 @@ def evaluate_model(inv_y, inv_yhat):
 
 
 def main():
-    values, veri_values = load_data()
+
+    db, cursor = connect_database()
+
+    values, veri_values = load_data(db, cursor)
 
     # normalize features
     scaler = MinMaxScaler(feature_range=(0, 1))
