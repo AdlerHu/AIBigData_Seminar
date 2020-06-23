@@ -2,7 +2,6 @@ import numpy as np
 from math import sqrt
 from numpy import concatenate
 from matplotlib import pyplot
-from pandas import read_csv
 from pandas import DataFrame
 from pandas import concat
 from sklearn.preprocessing import MinMaxScaler
@@ -17,10 +16,7 @@ import pandas as pd
 
 # 連接資料庫
 def connect_database():
-
-    # 連接Paul的資料庫
     db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
-
     cursor = db.cursor()
     db.autocommit(True)
     return db, cursor
@@ -51,40 +47,50 @@ def series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
     return agg
 
 
+# 自訂計算 MAPE 的函數
 def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + 0.00001))) * 100
 
 
+# 從資料庫讀取出要用的欄位
+# !! 改這裡 !!
+# 要預測的放在第一欄
+# 最少要2欄
 def load_data(db, cursor):
-    sql = """SELECT p.price, p.amount, p.d1_origin_price, p.d1_price, 
-    p.p_banana_d1_price, p.p_banana_d1_amount, p.d5_avg_price, p.dx_avg_amount
-FROM Prediction_Source p
-WHERE (p.market_no) = '109';"""
+    train_sql = """SELECT p.price, p.amount, p.d1_origin_price, p.d1_price, p.p_banana_d1_price
+    , p.p_banana_d1_amount, p.d5_avg_price, p.dx_avg_amount
+    FROM Prediction_Source p
+    WHERE (p.market_no) = '109' and (p.trade_date between '2012-01-01' and '2020-04-30');"""
 
-    cursor.execute(sql)
+    veri_sql = """SELECT p.price, p.amount, p.d1_origin_price, p.d1_price, p.p_banana_d1_price
+    , p.p_banana_d1_amount, p.d5_avg_price, p.dx_avg_amount
+    FROM Prediction_Source p
+    WHERE (p.market_no) = '109' and (p.trade_date between '2020-04-30' and '2020-05-31');"""
+    
+    cursor.execute(train_sql)
 
-    dataset = pd.read_sql_query(sql, db)
-    veri_set = pd.read_sql_query(sql, db)
-
-    # load dataset
-    # dataset = read_csv('Taipei1_price_train.csv', header=0, index_col=0)
-    # veri_set = read_csv('Taipei1_price_verification.csv', header=0, index_col=0)
+    dataset = pd.read_sql_query(train_sql, db)
+    veri_set = pd.read_sql_query(veri_sql, db)
 
     values = dataset.values
     veri_values = veri_set.values
 
-    encoder = LabelEncoder()
-    values[:, 4] = encoder.fit_transform(values[:, 4])
-    veri_values[:, 4] = encoder.fit_transform(veri_values[:, 4])
+    columns = values.shape[1]
+
+    # 不知道是什麼，註解掉也沒有影響
+    # encoder = LabelEncoder()
+    # values[:, 4] = encoder.fit_transform(values[:, 4])
+    # veri_values[:, 4] = encoder.fit_transform(veri_values[:, 4])
 
     # ensure all data is float
-    values = values.astype('float32')
-    veri_values = veri_values.astype('float32')
+    # values = values.astype('float32')
+    # veri_values = veri_values.astype('float32')
 
-    return values, veri_values
+    return values, veri_values, columns
 
 
-def frame_data_as_supervised_learning(scaler, values, veri_values):
+# 把資料轉換成可以機器學習的形式
+def frame_data_as_supervised_learning(scaler, values, veri_values, columns):
 
     scaled = scaler.fit_transform(values)
     veri_scaled = scaler.fit_transform(veri_values)
@@ -94,31 +100,42 @@ def frame_data_as_supervised_learning(scaler, values, veri_values):
     veri_reframed = series_to_supervised(veri_scaled, 1, 1)
 
     # print(reframed.describe())
-    drop_columns(reframed, veri_reframed)
+    drop_columns(reframed, veri_reframed, columns)
 
     return reframed, veri_reframed
 
 
-def drop_columns(reframed, veri_reframed):
+# 刪除不要的欄位
+# 資料有 n 欄, drop 掉 n+1 到 2n-1
+#        8 欄  drop    9, 10, 11, 12, 13, 14, 15
+def drop_columns(reframed, veri_reframed, columns):
+    list1, list2 = [], []
+    for i in range(columns+1, (columns+1)*2 -2):
+        list1.append(i)
+
+    list2.append(list1)
+
     # drop columns we don't want to predict
-    reframed.drop(reframed.columns[[9, 10, 11, 12, 13, 14, 15]], axis=1, inplace=True)
-    veri_reframed.drop(veri_reframed.columns[[9, 10, 11, 12, 13, 14, 15]], axis=1, inplace=True)
+    reframed.drop(reframed.columns[list2], axis=1, inplace=True)
+    veri_reframed.drop(veri_reframed.columns[list2], axis=1, inplace=True)
 
     return reframed, veri_reframed
 
 
-def split_data_set(n_train_days, reframed, veri_reframed):
+# 用訓練天數切出訓練、測試資料集 
+def split_data_set(train_days, reframed, veri_reframed):
     # split into train and test sets
     values = reframed.values
     veri_values = veri_reframed.values
 
-    train = values[:n_train_days, :]
-    test = values[n_train_days:, :]
+    train = values[:train_days, :]
+    test = values[train_days:, :]
     verification = veri_values[:, :]
 
     return train, test, verification
 
 
+# 切出x, y並改變形狀
 def split_and_reshape(train, test, verification):
     # split into input and outputs
     train_X, train_y = train[:, :-1], train[:, -1]
@@ -133,6 +150,7 @@ def split_and_reshape(train, test, verification):
     return train_X, train_y, test_X, test_y, veri_X, veri_y
 
 
+# 有出形狀不對的錯誤時候用這個函數檢查
 def print_shape(train_X, train_y, test_X, test_y, veri_X, veri_y):
     print(f'trainX: {train_X.shape}')
     print(f'trainY: {train_y.shape}')
@@ -142,6 +160,8 @@ def print_shape(train_X, train_y, test_X, test_y, veri_X, veri_y):
     print(f'veriY: {veri_y.shape}')
 
 
+# model 
+# !! 改這裡 !!
 def train_model(train_X, train_y, test_X, test_y):
     # design network
     model = Sequential()
@@ -160,6 +180,7 @@ def train_model(train_X, train_y, test_X, test_y):
     return model, history
 
 
+# 用train好的模型做預測
 def predict(scaler, model, veri_X, veri_y):
     # make a prediction
     yhat = model.predict(veri_X)
@@ -177,12 +198,13 @@ def predict(scaler, model, veri_X, veri_y):
     inv_y = inv_y[:, 0]
 
     for i in range(inv_yhat.size):
-        print(inv_y[i] - inv_yhat[i])
-        # print(f'{inv_y[i]}, {inv_yhat[i]}')
+        # print(inv_y[i] - inv_yhat[i])
+        print(f'{inv_y[i]}, {inv_yhat[i]}')
 
     return inv_y, inv_yhat
 
 
+# 驗證模型的準確度 
 def evaluate_model(inv_y, inv_yhat):
     # caculate MAPE
     mape = mean_absolute_percentage_error(inv_y, inv_yhat)
@@ -206,12 +228,13 @@ def main():
 
     db, cursor = connect_database()
 
-    values, veri_values = load_data(db, cursor)
+    values, veri_values, columns = load_data(db, cursor)
 
     # normalize features
     scaler = MinMaxScaler(feature_range=(0, 1))
-    reframed, veri_reframed = frame_data_as_supervised_learning(scaler, values, veri_values)
+    reframed, veri_reframed = frame_data_as_supervised_learning(scaler, values, veri_values, columns)
 
+    # 訓練天數, 交易天數少的市場要改
     train_days = 1000
 
     train, test, verification = split_data_set(train_days, reframed, veri_reframed)
@@ -229,3 +252,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
