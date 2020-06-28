@@ -1,0 +1,18 @@
+amount,16.499,4851117.401,2202.525
+"amount, price ",16.286,4904584.775,2214.630
+"amount, price, d1_price ",16.228,4835981.403,2199.086
+"amount, price, d1_price, d1_origin_price ",15.925,4912346.393,2216.381
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price ",16.164,4920758.230,2218.278
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, p_banana_d1_amount ",15.694,4889871.255,2211.305
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, exchange_rate_price ",16.704,4602457.059,2145.334
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, guava_d1_price ",16.770,5179387.868,2275.827
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, guava_d1_price, p_banana_d1_amount ",16.115,5006284.240,2237.473
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, guava_d1_price, week_day ",16.529,5038103.375,2244.572
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, guava_d1_price, week_day, lunar_day_for_price ",16.738,5009184.588,2238.121
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, week_day, lunar_day_for_price ",15.937,4852802.769,2202.908
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, week_day, lunar_day_for_price, dx_avg_amount ",16.161,4866801.777,2206.083
+"amount, price, d1_price, d1_origin_price, p_banana_d1_price, week_day, lunar_day_for_price, dx_avg_amount, d5_avg_price ",15.931,4660915.869,2158.915
+"amount, price, d1_price, d1_origin_price, week_day, lunar_day_for_price ",15.465,4804191.685,2191.847
+"amount, price, d1_price, d1_origin_price, week_day, lunar_day_for_price, exchange_rate_price ",15.531,4509246.823,2123.499
+"amount, price, d1_price, d1_origin_price, week_day, lunar_day_for_price, t_month_price ",16.115,4958560.748,2226.783
+"amount, price, d1_price, d1_origin_price, week_day, lunar_day_for_price, p_banana_d1_price, guava_d1_price, p_banana_d1_amount ",15.876,4896589.491,2212.824
