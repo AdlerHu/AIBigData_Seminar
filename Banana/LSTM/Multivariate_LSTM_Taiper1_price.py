@@ -12,6 +12,7 @@ from keras.layers import Dense
 from keras.layers import LSTM
 import MySQLdb
 import pandas as pd
+import csv
 
 
 # 連接資料庫
@@ -52,46 +53,8 @@ def mean_absolute_percentage_error(y_true, y_pred):
     return np.mean(np.abs((y_true - y_pred) / (y_true + 0.00001))) * 100
 
 
-# 從資料庫讀取出要用的欄位
-# !! 改這裡 !!
-# 要預測的放在第一欄
-# 最少要2欄
-def load_data(db, cursor):
-    train_sql = """SELECT p.price, p.amount, p.d1_origin_price, p.d1_price, p.p_banana_d1_price
-    , p.p_banana_d1_amount, p.d5_avg_price, p.dx_avg_amount
-    FROM Prediction_Source p
-    WHERE (p.market_no) = '109' and (p.trade_date between '2012-01-01' and '2020-04-30');"""
-
-    veri_sql = """SELECT p.price, p.amount, p.d1_origin_price, p.d1_price, p.p_banana_d1_price
-    , p.p_banana_d1_amount, p.d5_avg_price, p.dx_avg_amount
-    FROM Prediction_Source p
-    WHERE (p.market_no) = '109' and (p.trade_date between '2020-04-30' and '2020-05-31');"""
-    
-    cursor.execute(train_sql)
-
-    dataset = pd.read_sql_query(train_sql, db)
-    veri_set = pd.read_sql_query(veri_sql, db)
-
-    values = dataset.values
-    veri_values = veri_set.values
-
-    columns = values.shape[1]
-
-    # 不知道是什麼，註解掉也沒有影響
-    # encoder = LabelEncoder()
-    # values[:, 4] = encoder.fit_transform(values[:, 4])
-    # veri_values[:, 4] = encoder.fit_transform(veri_values[:, 4])
-
-    # ensure all data is float
-    # values = values.astype('float32')
-    # veri_values = veri_values.astype('float32')
-
-    return values, veri_values, columns
-
-
 # 把資料轉換成可以機器學習的形式
 def frame_data_as_supervised_learning(scaler, values, veri_values, columns):
-
     scaled = scaler.fit_transform(values)
     veri_scaled = scaler.fit_transform(veri_values)
 
@@ -110,7 +73,7 @@ def frame_data_as_supervised_learning(scaler, values, veri_values, columns):
 #        8 欄  drop    9, 10, 11, 12, 13, 14, 15
 def drop_columns(reframed, veri_reframed, columns):
     list1, list2 = [], []
-    for i in range(columns+1, (columns+1)*2 -2):
+    for i in range(columns + 1, (columns + 1) * 2 - 2):
         list1.append(i)
 
     list2.append(list1)
@@ -122,7 +85,7 @@ def drop_columns(reframed, veri_reframed, columns):
     return reframed, veri_reframed
 
 
-# 用訓練天數切出訓練、測試資料集 
+# 用訓練天數切出訓練、測試資料集
 def split_data_set(train_days, reframed, veri_reframed):
     # split into train and test sets
     values = reframed.values
@@ -151,33 +114,13 @@ def split_and_reshape(train, test, verification):
 
 
 # 有出形狀不對的錯誤時候用這個函數檢查
-def print_shape(train_X, train_y, test_X, test_y, veri_X, veri_y):
+def check_shape(train_X, train_y, test_X, test_y, veri_X, veri_y):
     print(f'trainX: {train_X.shape}')
     print(f'trainY: {train_y.shape}')
     print(f'testX: {test_X.shape}')
     print(f'testY: {test_y.shape}')
     print(f'veriX: {veri_X.shape}')
     print(f'veriY: {veri_y.shape}')
-
-
-# model 
-# !! 改這裡 !!
-def train_model(train_X, train_y, test_X, test_y):
-    # design network
-    model = Sequential()
-    model.add(LSTM(25, input_shape=(train_X.shape[1], train_X.shape[2])))
-    model.add(Dense(1))
-    model.compile(loss='mae', optimizer='adam')
-
-    # fit network
-    history = model.fit(train_X, train_y, epochs=100, batch_size=20, validation_data=(test_X, test_y), verbose=2,
-                        shuffle=False)
-    # plot history
-    pyplot.plot(history.history['loss'], label='train')
-    pyplot.plot(history.history['val_loss'], label='test')
-    pyplot.legend()
-    pyplot.show()
-    return model, history
 
 
 # 用train好的模型做預測
@@ -197,38 +140,89 @@ def predict(scaler, model, veri_X, veri_y):
     inv_y = scaler.inverse_transform(inv_y)
     inv_y = inv_y[:, 0]
 
-    for i in range(inv_yhat.size):
-        # print(inv_y[i] - inv_yhat[i])
-        print(f'{inv_y[i]}, {inv_yhat[i]}')
+    # for i in range(inv_yhat.size):
+    #     # print(inv_y[i] - inv_yhat[i])
+    #     print(f'{inv_y[i]}, {inv_yhat[i]}')
 
     return inv_y, inv_yhat
 
 
-# 驗證模型的準確度 
-def evaluate_model(inv_y, inv_yhat):
+# 驗證模型的準確度
+def evaluate_model(inv_y, inv_yhat, variable):
     # caculate MAPE
     mape = mean_absolute_percentage_error(inv_y, inv_yhat)
-    print(f'MAPE:{mape}')
-
-    # calculate RMSE
-    rmse = sqrt(mean_squared_error(inv_y, inv_yhat))
-    print('Verification RMSE: %.3f' % rmse)
+    # print('Verification MAPE: %.3f' % mape)
 
     # caculate MSE
     mse = mean_squared_error(inv_y, inv_yhat)
-    print('Verification MSE: %.3f' % mse)
+    # print('Verification MSE: %.3f' % mse)
 
-    pyplot.plot(inv_y, label='real')
-    pyplot.plot(inv_yhat, label='prediction')
-    pyplot.legend()
-    pyplot.show()
+    # calculate RMSE
+    rmse = sqrt(mean_squared_error(inv_y, inv_yhat))
+    # print('Verification RMSE: %.3f' % rmse)
+
+    print(variable)
+    print('%.3f, %.3f, %.3f' % (mape, mse, rmse))
+
+    with open('price/Fongshan_price.csv', 'a', encoding='utf8') as f:
+        writer = csv.writer(f)
+        writer.writerow([variable, '%.3f' % mape, '%.3f' % mse, '%.3f' % rmse])
+
+    # pyplot.plot(inv_y, label='real')
+    # pyplot.plot(inv_yhat, label='prediction')
+    # pyplot.legend()
+    # pyplot.show()
+
+
+# 從資料庫讀取出要用的欄位
+# !! 改這裡 !!
+# 要預測的放在第一欄
+def load_data(db, cursor):
+
+    train_sql = """SELECT price, amount, d1_price FROM Prediction_Source
+    WHERE (market_no = '830') and (trade_date between '2012-01-01' and '2020-04-30');"""
+
+    veri_sql = """SELECT price, amount, d1_price FROM Prediction_Source
+    WHERE (market_no = '830') and (trade_date between '2020-04-30' and '2020-05-31');"""
+
+    cursor.execute(train_sql)
+
+    dataset = pd.read_sql_query(train_sql, db)
+    veri_set = pd.read_sql_query(veri_sql, db)
+
+    values = dataset.values
+    veri_values = veri_set.values
+
+    columns = values.shape[1]
+
+    variable = train_sql[train_sql.index('price'):train_sql.index('FROM')]
+    return values, veri_values, columns, variable
+
+
+# model
+# !! 改這裡 !!
+def train_model(train_X, train_y, test_X, test_y):
+    # design network
+    model = Sequential()
+    model.add(LSTM(25, input_shape=(train_X.shape[1], train_X.shape[2])))
+    model.add(Dense(1))
+    model.compile(loss='mae', optimizer='adam')
+
+    # fit network
+    history = model.fit(train_X, train_y, epochs=200, batch_size=20, validation_data=(test_X, test_y), verbose=2,
+                        shuffle=False)
+    # plot history
+    # pyplot.plot(history.history['loss'], label='train')
+    # pyplot.plot(history.history['val_loss'], label='test')
+    # pyplot.legend()
+    # pyplot.show()
+    return model, history
 
 
 def main():
-
     db, cursor = connect_database()
 
-    values, veri_values, columns = load_data(db, cursor)
+    values, veri_values, columns, variable = load_data(db, cursor)
 
     # normalize features
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -245,11 +239,12 @@ def main():
 
     model, history = train_model(train_X, train_y, test_X, test_y)
 
+    print('-------------------------------------------------------')
+
     inv_y, inv_yhat = predict(scaler, model, veri_X, veri_y)
 
-    evaluate_model(inv_y, inv_yhat)
+    evaluate_model(inv_y, inv_yhat, variable)
 
 
 if __name__ == '__main__':
     main()
-
