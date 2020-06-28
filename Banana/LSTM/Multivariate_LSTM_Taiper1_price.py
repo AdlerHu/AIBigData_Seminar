@@ -164,7 +164,7 @@ def evaluate_model(inv_y, inv_yhat, variable):
     print(variable)
     print('%.3f, %.3f, %.3f' % (mape, mse, rmse))
 
-    with open('price/Fongshan_price.csv', 'a', encoding='utf8') as f:
+    with open('price/Taipei1_price.csv', 'a', encoding='utf8') as f:
         writer = csv.writer(f)
         writer.writerow([variable, '%.3f' % mape, '%.3f' % mse, '%.3f' % rmse])
 
@@ -177,13 +177,11 @@ def evaluate_model(inv_y, inv_yhat, variable):
 # 從資料庫讀取出要用的欄位
 # !! 改這裡 !!
 # 要預測的放在第一欄
-def load_data(db, cursor):
+def load_data(db, cursor, variable):
 
-    train_sql = """SELECT price, amount, d1_price FROM Prediction_Source
-    WHERE (market_no = '830') and (trade_date between '2012-01-01' and '2020-04-30');"""
+    train_sql = f"SELECT {variable} FROM Prediction_Source WHERE (market_no = '109') and (trade_date between '2012-01-01' and '2020-04-30'); "
 
-    veri_sql = """SELECT price, amount, d1_price FROM Prediction_Source
-    WHERE (market_no = '830') and (trade_date between '2020-04-30' and '2020-05-31');"""
+    veri_sql = f"SELECT {variable} FROM Prediction_Source WHERE (market_no = '109') and (trade_date between '2020-04-30' and '2020-05-31'); "
 
     cursor.execute(train_sql)
 
@@ -195,8 +193,7 @@ def load_data(db, cursor):
 
     columns = values.shape[1]
 
-    variable = train_sql[train_sql.index('price'):train_sql.index('FROM')]
-    return values, veri_values, columns, variable
+    return values, veri_values, columns
 
 
 # model
@@ -219,31 +216,43 @@ def train_model(train_X, train_y, test_X, test_y):
     return model, history
 
 
+variables = []
+
+
 def main():
     db, cursor = connect_database()
 
-    values, veri_values, columns, variable = load_data(db, cursor)
+    with open('price/Variables.csv', newline='') as csvfile:
+        # 讀取 CSV 檔案內容
+        data = csv.reader(csvfile)
 
-    # normalize features
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    reframed, veri_reframed = frame_data_as_supervised_learning(scaler, values, veri_values, columns)
+        for row in data:
+            variables.append(row[0])
 
-    # 訓練天數, 交易天數少的市場要改
-    train_days = 1000
+    for variable in variables:
 
-    train, test, verification = split_data_set(train_days, reframed, veri_reframed)
+        values, veri_values, columns = load_data(db, cursor, variable)
 
-    train_X, train_y, test_X, test_y, veri_X, veri_y = split_and_reshape(train, test, verification)
+        # normalize features
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        reframed, veri_reframed = frame_data_as_supervised_learning(scaler, values, veri_values, columns)
 
-    # print_shape(train_X, train_y, test_X, test_y, veri_X, veri_y)
+        # 訓練天數, 交易天數少的市場要改
+        train_days = 1000
 
-    model, history = train_model(train_X, train_y, test_X, test_y)
+        train, test, verification = split_data_set(train_days, reframed, veri_reframed)
 
-    print('-------------------------------------------------------')
+        train_X, train_y, test_X, test_y, veri_X, veri_y = split_and_reshape(train, test, verification)
 
-    inv_y, inv_yhat = predict(scaler, model, veri_X, veri_y)
+        # print_shape(train_X, train_y, test_X, test_y, veri_X, veri_y)
 
-    evaluate_model(inv_y, inv_yhat, variable)
+        model, history = train_model(train_X, train_y, test_X, test_y)
+
+        print('-------------------------------------------------------')
+
+        inv_y, inv_yhat = predict(scaler, model, veri_X, veri_y)
+
+        evaluate_model(inv_y, inv_yhat, variable)
 
 
 if __name__ == '__main__':
