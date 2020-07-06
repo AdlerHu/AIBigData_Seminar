@@ -17,6 +17,7 @@ from sklearn.preprocessing import MinMaxScaler
 import MySQLdb
 import pandas as pd
 import csv
+from keras.callbacks import EarlyStopping
 
 
 # !! 改這裡 !!
@@ -24,7 +25,7 @@ import csv
 def split_dataset(data):
     # split into standard weeks
     # train, test = data[1:-328], data[-328:-6]
-    train, test = data[1:901], data[901:]
+    train, test = data[:1980], data[1980:]
 
     print(len(train))
     print(len(test))
@@ -42,7 +43,7 @@ def split_dataset(data):
 # 從 CSV 檔讀取變數的函式
 def load_variables():
     variables = []
-    with open('price/temp.csv', newline='') as csvfile:
+    with open('price/Variables.csv', newline='') as csvfile:
         # 讀取 CSV 檔案內容
         data = csv.reader(csvfile)
 
@@ -55,7 +56,7 @@ def load_variables():
 # 將模型指標寫成 CSV 檔的函式
 def result(variable, mape, rmse):
     mse = rmse ** 2
-    with open('price/Taipei1.csv', 'a', encoding='utf8') as f:
+    with open('price/Taipei2.csv', 'a', encoding='utf8') as f:
         writer = csv.writer(f)
         writer.writerow([variable, '%.3f' % mape, '%.3f' % mse, '%.3f' % rmse])
 
@@ -67,7 +68,7 @@ def load_data(variable):
     db, cursor = connect_database()
 
     sql = f"select {variable} from Prediction_Source " \
-          f"where (market_no = 109) and (trade_date between '2012-01-10' and '2020-07-01'); "
+          f"where (market_no = '104') and (trade_date between '2012-01-11' and '2020-07-01'); "
 
     cursor.execute(sql)
     dataset = pd.read_sql_query(sql, db)
@@ -95,7 +96,9 @@ def build_model(train, n_input):
     model.add(TimeDistributed(Dense(1)))
     model.compile(loss='mae', optimizer='adam')
 
-    model.fit(train_x, train_y, epochs=epochs, batch_size=batch_size, verbose=verbose)
+    estop = EarlyStopping(monitor='loss', patience=60)
+
+    model.fit(train_x, train_y, epochs=epochs, batch_size=batch_size, verbose=verbose, callbacks=[estop])
     return model
 
 
@@ -178,7 +181,7 @@ def forecast(model, history, n_input):
 # evaluate one or more weekly forecasts against expected values
 def evaluate_forecasts(variable, test_groups, actual, predicted):
     scores = list()
-    # calculate an RMSE score for each day
+    # calculate an rmse score for each day
 
     pred = predicted.reshape((test_groups, 30))
 
@@ -196,7 +199,7 @@ def evaluate_forecasts(variable, test_groups, actual, predicted):
 
         # store
         scores.append(rmse)
-    # calculate overall RMSE
+    # calculate overall rmse
     s = 0
     for row in range(actual.shape[0]):
         for col in range(actual.shape[1]):
@@ -206,7 +209,7 @@ def evaluate_forecasts(variable, test_groups, actual, predicted):
     mape = mean_absolute_percentage_error(actual, pred)
     print(f'MAPE: {mape}')
 
-    result(variable=variable, rmse=rmse, mape=mape)
+    result(variable=variable, mape=mape, rmse=rmse)
     return score, scores
 
 
