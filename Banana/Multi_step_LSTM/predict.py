@@ -1,13 +1,15 @@
 import numpy as np
 import random
 import pandas as pd
-import MySQLdb
+# import MySQLdb
 from tensorflow import keras
 import datetime
+import pymysql
 
 
 def connect_database():
-    db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
+#     db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
+    db = pymysql.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
     cursor = db.cursor()
     db.autocommit(True)
 
