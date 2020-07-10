@@ -2,14 +2,12 @@ import numpy as np
 import random
 import pandas as pd
 import MySQLdb
-import pymysql
 from tensorflow.python import keras
 import datetime
 
 
 def connect_database():
-    #db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
-    db = pymysql.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
+    db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
     cursor = db.cursor()
     db.autocommit(True)
 
@@ -17,13 +15,6 @@ def connect_database():
 
 
 def load_dataset(db, cursor, market_no, variables):
-    # sql = '''select a.price, a.d1_price, a.d1_origin_price, a.week_day from (
-    #         select trade_date, price, d1_price, d1_origin_price, week_day from Prediction_Source
-    #             where market_no = '109'
-    #             order by trade_date desc
-    #             limit 15 ) a
-    # order by a.trade_date;'''
-
     sql = f"select {variables} " \
           f"from ( select trade_date, {variables} " \
           f"from Prediction_Source where market_no = {market_no} " \
@@ -67,7 +58,8 @@ def insert_database(db, cursor, predictions, market_no):
 
 
 def main():
-    markets = {1: ['price_prediction', '109', 'models/price/Taipei1.h5', 'price,d1_price,d1_origin_price,week_day']}
+       markets = {1: ['price_prediction', '109', 'models/price/Taipei1.h5', 'price,d1_price,d1_origin_price,week_day'],
+              3: ['price_prediction', '241', 'models/price/Sanchong.h5', 'price,d1_price,week_day']}
 
     for key in markets.keys():
         market_no = markets[key][1]
