@@ -49,7 +49,7 @@ def insert_database(db, cursor, predictions, market_no):
 
     for i in range(len(predictions)):
         try:
-            sql_str = f"INSERT INTO price_prediction (`predict_date`, `date`, `market_no`, `price`) " \
+            sql_str = f"INSERT INTO amount_prediction (`predict_date`, `date`, `market_no`, `amount`) " \
                       f"values (\'{today}\', \'{date[i]}\', \'{market_no}\', {predictions[i]});"
             cursor.execute(sql_str)
         except Exception as err:
