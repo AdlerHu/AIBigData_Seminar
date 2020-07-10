@@ -60,7 +60,8 @@ def main():
     markets = {1: ['price_prediction', '109', 'models/price/Taipei1.h5', 'price,d1_price,d1_origin_price,week_day'],
                2: ['price_prediction', '104', 'models/price/Taipei2.h5', 'price,d1_price,week_day'],
               4: ['price_prediction', '241', 'models/price/Sanchong.h5', 'price,d1_price,week_day'],
-              5: ['price_prediction', '400', 'models/price/Taichung.h5', 'price,d1_price,week_day ']}
+              5: ['price_prediction', '400', 'models/price/Taichung.h5', 'price,d1_price,week_day'],
+              6: ['price_prediction', '420', 'models/price/Fengyuan.h5', 'price, d1_price, week_day']}
 
     for key in markets.keys():
         market_no = markets[key][1]
