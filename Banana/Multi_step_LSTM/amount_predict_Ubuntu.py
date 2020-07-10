@@ -61,7 +61,8 @@ def main():
               2: ['amount_prediction', '104', 'models/amount/Taipei2.h5', 'amount,p_banana_d1_amount,d5_avg_price'],
               3: ['amount_prediction', '220', 'models/amount/Banqiao.h5', 'amount,dx_avg_amount,p_banana_d1_amount,pineapple_d1_amount'],
               4: ['amount_prediction', '241', 'models/amount/Sanchong.h5', 'amount,p_banana_d1_amount,d5_avg_price'],
-              5: ['amount_prediction', '400', 'models/amount/Taichung.h5', 'amount,dx_avg_amount,pineapple_d1_amount']}
+              5: ['amount_prediction', '400', 'models/amount/Taichung.h5', 'amount,dx_avg_amount,pineapple_d1_amount'],
+              6: ['amount_prediction', '420', 'models/amount/Fengyuan.h5', 'amount,dx_avg_amount,pineapple_d1_amount']}
 
     for key in markets.keys():
         market_no = markets[key][1]
