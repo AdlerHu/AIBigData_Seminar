@@ -28,9 +28,9 @@ def connect_database():
 def load_data():
     db, cursor = connect_database()
 
-    sql = '''select price, d1_price, d1_origin_price, week_day
+    sql = '''select amount,pineapple_d1_amount,d5_avg_price
              from Prediction_Source
-             where (market_no = 109) and (trade_date between '2012-01-11' and '2020-07-01');'''
+             where (market_no = 104) and (trade_date between '2012-01-11' and '2020-07-01');'''
 
     cursor.execute(sql)
     dataset = pd.read_sql_query(sql, db)
@@ -98,7 +98,7 @@ def build_model(train, n_input):
     train_x, train_y = to_supervised(train, n_input)
 
     # define parameters
-    verbose, epochs, batch_size = 2, 5, 10
+    verbose, epochs, batch_size = 2, 100, 10
     n_timesteps, n_features, n_outputs = train_x.shape[1], train_x.shape[2], train_y.shape[1]
 
     # reshape output into [samples, timesteps, features]
@@ -142,24 +142,24 @@ def build_model(train, n_input):
     pyplot.ylabel('loss (mse)')
     pyplot.show()
 
-    # 顯示 mae 學習結果
-    mae = history.history['mae']
-    val_mae = history.history['val_mae']  # 取得驗證的歷史紀錄
-    idx = np.argmin(val_mae)  # 找出最佳(低)驗證週期
-    val = val_mae[idx]  # 取得最佳(低)驗證的val_mae值
-
-    his_EMA = to_EMA(history.history['val_mae'])  # 將 val_mae 的值轉成 EMA 值
-    idx = np.argmin(his_EMA)  # 找出最低 EMA 值的索引
-    print('最小 EMA 為第', idx + 1, '週期的', his_EMA[idx])
-
-    pyplot.plot(range(len(loss)), mae, marker='.', label='loss(train)')
-    pyplot.plot(range(len(val_mae)), val_mae, marker='.', label='val_loss(validation)')
-    pyplot.legend(loc='best')
-    pyplot.xlabel('epoch')
-    pyplot.ylabel('loss (mae)')
-    # pyplot.ylim([0.00001, 10])  # y軸邊界
-    pyplot.title(f'Best val_mae at epoch = {idx + 1} val_mae={val:.5f}')
-    pyplot.show()
+    # # 顯示 mae 學習結果
+    # mae = history.history['mae']
+    # val_mae = history.history['val_mae']  # 取得驗證的歷史紀錄
+    # idx = np.argmin(val_mae)  # 找出最佳(低)驗證週期
+    # val = val_mae[idx]  # 取得最佳(低)驗證的val_mae值
+    #
+    # his_EMA = to_EMA(history.history['val_mae'])  # 將 val_mae 的值轉成 EMA 值
+    # idx = np.argmin(his_EMA)  # 找出最低 EMA 值的索引
+    # print('最小 EMA 為第', idx + 1, '週期的', his_EMA[idx])
+    #
+    # pyplot.plot(range(len(loss)), mae, marker='.', label='loss(train)')
+    # pyplot.plot(range(len(val_mae)), val_mae, marker='.', label='val_loss(validation)')
+    # pyplot.legend(loc='best')
+    # pyplot.xlabel('epoch')
+    # pyplot.ylabel('loss (mae)')
+    # # pyplot.ylim([0.00001, 10])  # y軸邊界
+    # pyplot.title(f'Best val_mae at epoch = {idx + 1} val_mae={val:.5f}')
+    # pyplot.show()
 
     return model
 
@@ -217,7 +217,6 @@ def evaluate_forecasts(test_groups, actual, predicted):
 
     pred = predicted.reshape((test_groups, 30))
 
-
     for i in range(actual.shape[1]):
         # calculate mse
         mse = mean_squared_error(actual[:, i], predicted[:, i])
@@ -240,12 +239,12 @@ def evaluate_forecasts(test_groups, actual, predicted):
     print(f'MSE: {score ** 2}')
     print(f'RMSE: {score}')
 
-    pyplot.title('1-month Price Prediction for Taipei1')
-    pyplot.plot(actual[-1], label='real price')
-    pyplot.plot(pred[-1], label='predicted price')
+    pyplot.title('1-month Amount Prediction for Taipei2')
+    pyplot.plot(actual[-1], label='real amount')
+    pyplot.plot(pred[-1], label='predicted amount')
     pyplot.legend(loc='best')
     pyplot.xlabel('Day')
-    pyplot.ylabel('Avg. Price')
+    pyplot.ylabel('Avg. Amount')
     pyplot.show()
 
     return score, scores
@@ -263,10 +262,10 @@ def predict_future(dataset, model, n_input):
 
     # 製作 samples
     # 改維度: 2D -> 3D
-    last_10_day_3D = np.reshape(last_15_day, (1, n_input, last_15_day.shape[1]))
+    last_15_day_3D = np.reshape(last_15_day, (1, n_input, last_15_day.shape[1]))
 
     # 預測未來價格
-    future = model.predict(last_10_day_3D)
+    future = model.predict(last_15_day_3D)
     # print(future)
     print(future.ndim, type(future), future.shape)
     print('Predicted Price for 30-Day:')
@@ -301,7 +300,7 @@ def main():
     predict_future(dataset, model, n_input)
 
     # 存儲模型與權重
-    # model.save('LSTM_taipei1(15to30).h5')
+    # model.save('models/amount/Taipei2.h5')
 
 
 if __name__ == '__main__':
