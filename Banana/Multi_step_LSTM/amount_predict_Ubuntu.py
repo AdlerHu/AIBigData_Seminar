@@ -57,7 +57,8 @@ def insert_database(db, cursor, predictions, market_no):
 
 
 def main():
-    markets = {1: ['amount_prediction', '109', 'models/amount/Taipei1.h5', 'amount,p_banana_d1_amount,d5_avg_price']}
+    markets = {1: ['amount_prediction', '109', 'models/amount/Taipei1.h5', 'amount,p_banana_d1_amount,d5_avg_price'], 
+              2: ['amount_prediction', '104', 'models/amount/Taipei2.h5', 'amount,p_banana_d1_amount,d5_avg_price']}
 
     for key in markets.keys():
         market_no = markets[key][1]
