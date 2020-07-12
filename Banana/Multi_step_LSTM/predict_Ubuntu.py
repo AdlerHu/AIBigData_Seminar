@@ -83,7 +83,7 @@ def main():
               5: ['400', 'models/price/Taichung.h5', 'price,d1_price,week_day',
                   'models/amount/Taichung.h5', 'amount,dx_avg_amount,pineapple_d1_amount'],
               6: ['420', 'models/price/Fengyuan.h5', 'price, d1_price, week_day',
-                  'models/amount/Fengyuan.h5', 'amount,dx_avg_amount,pineapple_d1_amount'],
+                  'models/amount/Fengyuan.h5', 'amount,price,d1_price,d1_origin_price,p_banana_d1_price,week_day,lunar_day_for_price,dx_avg_amount'],
               7: ['800', 'models/price/Kaohsiung.h5', 'price,d1_price,d1_origin_price,p_banana_d1_price,week_day',
                   'models/amount/Kaohsiung.h5', 'amount,dx_avg_amount,p_banana_d1_amount,pineapple_d1_amount'],
               8: ['830', 'models/price/Fongshan.h5', 'price,d1_price,d1_origin_price,week_day,lunar_day_for_price',
