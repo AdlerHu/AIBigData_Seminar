@@ -63,7 +63,7 @@ def insert_database(cursor, price_predictions, amount_predictions, market_no):
 
     for i in range(len(price_predictions)):
         try:
-            sql_str = f"INSERT INTO Prediction (`predict_date`, `date`, `market_no`, `price`, `amount`) " \
+            sql_str = f"INSERT INTO predictions (`predict_date`, `date`, `market_no`, `price`, `amount`) " \
                       f"values (\'{today}\', \'{date[i]}\', \'{market_no}\'," \
                       f" {price_predictions[i]}, {amount_predictions[i]});"
             cursor.execute(sql_str)
