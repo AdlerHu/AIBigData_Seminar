@@ -120,7 +120,9 @@ def main(end_date):
 
             time.sleep(1)
 
-
+    cursor.close()
+            
+            
 if __name__ == '__main__':
     '''
     end: 終止日期, 格式為'YYYY-MM-DD'不補零
