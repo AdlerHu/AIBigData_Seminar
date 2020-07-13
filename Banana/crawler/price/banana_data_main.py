@@ -38,6 +38,9 @@ for date in range(101, 109):
     print('--------------------')
     time.sleep(3)
 
+db.close()    
+cursor.close()    
+    
 # url = url_head + '109.01.01&EndDate=109.04.30'
 # res = ss.get(url, headers=headers)
 #
