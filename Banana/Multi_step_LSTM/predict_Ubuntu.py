@@ -65,19 +65,21 @@ def main():
                6: ['420', 'models/price/Fengyuan.h5', 'price, d1_price, week_day'],
                7: ['800', 'models/price/Kaohsiung.h5', 'price,d1_price,d1_origin_price,p_banana_d1_price,week_day'],
                8: ['830', 'models/price/Fongshan.h5', 'price,d1_price,d1_origin_price,week_day,lunar_day_for_price']}
-
+    db, cursor = connect_database()
+    
     for key in markets.keys():
         market_no = markets[key][0]
         model_path = markets[key][1]
         variables = markets[key][2]
 
-        db, cursor = connect_database()
         dataset = load_dataset(db=db, cursor=cursor, market_no=market_no, variables=variables).astype('float32')
         model = keras.models.load_model(model_path)
         predictions = predict(dataset=dataset.values, model=model, n_input=15)
 
         insert_database(cursor=cursor, predictions=predictions, market_no=market_no)
 
+    db.close()
+    cursor.close()
 
 if __name__ == '__main__':
     main()
