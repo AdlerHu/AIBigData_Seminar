@@ -35,6 +35,9 @@ def load_data():
     cursor.execute(sql)
     dataset = pd.read_sql_query(sql, db)
 
+    db.close()
+    cursor.close()
+    
     return dataset
 
 
