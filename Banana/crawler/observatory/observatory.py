@@ -44,3 +44,6 @@ for i in range(len(city_list)):
             print('Done')
         except Exception as err:
             print(err.args)
+            
+db.close()
+cursor.close()
