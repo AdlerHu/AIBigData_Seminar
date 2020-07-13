@@ -138,6 +138,8 @@ def main(url, start_date, end_date):
 
     insert_into_database(cursor, year_list, season_list, egr_list, gdp_list, start_date_list, end_date_list)
 
+    cursor.close()
+    
 
 if __name__ == '__main__':
     '''
