@@ -69,6 +69,9 @@ def main():
     predictions = predict(dataset=dataset.values, model=model, n_input=15)
     insert_database(db, cursor, predictions)
 
-
+    db.close()
+    cursor.close()
+    
+    
 if __name__ == '__main__':
     main()
