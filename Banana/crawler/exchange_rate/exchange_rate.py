@@ -69,7 +69,7 @@ def main():
     last_date = get_last_date(cursor=cursor)
     date_list, exchange_rate_list = crawl(last_date=last_date)
     insert_into_database(cursor=cursor, date_list=date_list, exchange_rate_list=exchange_rate_list)
-
+    cursor.close()
 
 if __name__ == '__main__':
     main()
