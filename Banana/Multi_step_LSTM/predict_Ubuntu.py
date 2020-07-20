@@ -43,7 +43,7 @@ def insert_database(cursor, predictions, market_no):
     date = []
     today = datetime.datetime.now().strftime("%Y-%m-%d")
 
-    for i in range(1, 31):
+    for i in range(0, 30):
         sth = datetime.datetime.now() + datetime.timedelta(days=i)
         date.append(sth.strftime('%Y-%m-%d'))
 
