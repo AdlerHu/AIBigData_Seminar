@@ -13,7 +13,7 @@ def connect_database():
     return cursor
 
 
-def get_last_date(cursor):
+def get_today_date(cursor):
     # 從資料庫得到最新日期
     sel_sql = '''select x.`date`
     from (select e.`date` 
@@ -44,17 +44,18 @@ def crawl(last_date):
     resp = ss.post(url, headers=headers, data=data)
 
     df = pd.read_html(resp.text)[2]
-    date_list = df['日期']
+    tmp_list = df['日期']
+    date_list = []
     exchange_rate_list = df['美元／新台幣']
 
-    for date in date_list:
-        date.replace('/', '-')
+    for date in tmp_list:
+        date_list.append(date.replace('/', '-'))
 
     return date_list, exchange_rate_list
 
 
 def insert_into_database(cursor, date_list, exchange_rate_list):
-    
+
     for i in range(len(exchange_rate_list)):
         try:
             sql_str = f"INSERT INTO exchange_rate (`date`, `rate`) VALUES (\'{date_list[i]}\', {exchange_rate_list[i]});"
@@ -65,12 +66,12 @@ def insert_into_database(cursor, date_list, exchange_rate_list):
 
 
 def main():
+
     cursor = connect_database()
-    last_date = get_last_date(cursor=cursor)
+    last_date = get_today_date(cursor=cursor)
     date_list, exchange_rate_list = crawl(last_date=last_date)
     insert_into_database(cursor=cursor, date_list=date_list, exchange_rate_list=exchange_rate_list)
-    cursor.close()
+
 
 if __name__ == '__main__':
     main()
-
