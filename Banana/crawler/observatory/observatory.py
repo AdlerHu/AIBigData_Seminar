@@ -7,10 +7,8 @@ headers = {
                   'Chrome/80.0.3987.132 Safari/537.36'}
 city = ['南投縣', '嘉義縣', '高雄市', '屏東縣']
 
-# 連接我的資料庫
-db = MySQLdb.connect(host='127.0.0.1', user='root', passwd='root', db='banana_database', port=3306, charset='utf8')
 # 連接Paul的資料庫
-# db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
+db = MySQLdb.connect(host=host, user='dbuser', passwd=passwd, db='fruveg', port=3307, charset='utf8')
 
 cursor = db.cursor()
 db.autocommit(True)
