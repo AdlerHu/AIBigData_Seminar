@@ -6,7 +6,7 @@ import datetime
 
 def connect_database():
     # 連接Paul的資料庫
-    db = MySQLdb.connect(host='127.0.0.1', user='dbuser', passwd='20200428', db='fruveg', port=3307, charset='utf8')
+    db = MySQLdb.connect(host=host, user='dbuser', passwd=passwd, db='fruveg', port=3307, charset='utf8')
     cursor = db.cursor()
     db.autocommit(True)
 
